@@ -1,31 +1,36 @@
+// App-komponentti on sovelluksen pääkomponentti. Se hallinnoi tilaa ja kutsuu
+// fetchData-funktiota hakeakseen säätiedot ja siirtää tiedot WeatherDisplay-komponenttiin.
+
 import React, { useState } from 'react';
-import WeatherDisplay from './components/WeatherDisplay';
-import './styles.css';
+import WeatherContainer from './components/WeatherContainer';
 
 function App() {
-  const [data, setData] = useState(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [info, setInfo] = useState(null);
+  const [errorText, setErrorText] = useState('');
 
-  const fetchData = async (location) => {
+  const retrieveInfo = async (place) => {
     try {
-      const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=fa0ff0e0d7014ee49b193431232503&q=${location}&aqi=yes`);
-      const json = await response.json();
+      const [presentResp, futureResp] = await Promise.all([
+        fetch(`https://api.weatherapi.com/v1/current.json?key=${process.env.REACT_APP_API_KEY}&q=${place}&aqi=yes`),
+        fetch(`https://api.weatherapi.com/v1/forecast.json?key=${process.env.REACT_APP_API_KEY}&q=${place}&days=3`),
+      ]);
 
-      if (response.ok) {
-        setData(json);
-        setErrorMessage('');
-      } else {
-        setErrorMessage(json.error.message);
+      if (!presentResp.ok || !futureResp.ok) {
+        throw new Error('Failed to fetch the forecast data.');
       }
-    } catch (error) {
-      setErrorMessage('An error occurred. Please try again later.');
+
+      const presentJson = await presentResp.json();
+      const futureJson = await futureResp.json();
+
+      setInfo({ location: presentJson.location, current: presentJson.current, forecast: futureJson.forecast });
+      setErrorText('');
+    } catch (err) {
+      setErrorText(err.message);
     }
   };
 
   return (
-    <div className="App">
-      <WeatherDisplay data={data} errorMessage={errorMessage} fetchData={fetchData} />
-    </div>
+      <WeatherContainer info={info} errorText={errorText} retrieveInfo={retrieveInfo} />
   );
 }
 
