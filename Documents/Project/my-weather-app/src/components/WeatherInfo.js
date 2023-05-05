@@ -3,11 +3,49 @@
 import React from 'react';
 import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
 import format from 'date-fns/format';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const WeatherInfo = ({ info }) => {
   const { location, current, forecast } = info;
   const { name, region, country } = location;
   const { condition, temp_c, precip_mm, humidity, wind_kph } = current;
+
+const TempGraphComponent = ({ weatherForecast }) => {
+    const chartData = weatherForecast.hour.map((Hour) => ({
+      timeStamp: format(new Date(Hour.time), 'HH:mm'),
+      tempValue: Hour.temp_c,
+    }));
+  
+    return (
+      <Grid item xs={12}>
+        <Card>
+          <CardContent>
+            <Typography variant="h5" component="h3" gutterBottom>
+              Hourly Temperature
+            </Typography>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart
+                data={chartData}
+                margin={{ top: 5, right: 40, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timeStamp" />
+                <YAxis />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="tempValue"
+                  stroke="#FFA500" // Orange stroke color
+                  activeDot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </Grid>
+    );
+  };
+
 
   return (
     <Grid container spacing={3}>
@@ -56,6 +94,8 @@ const WeatherInfo = ({ info }) => {
           </CardContent>
         </Card>
       </Grid>
+
+      {info.forecast && <TempGraphComponent weatherForecast ={forecast.forecastday[0]} />}
 
       {forecast &&
         forecast.forecastday.slice(0, 3).map((day) => (
